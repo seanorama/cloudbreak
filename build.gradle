@@ -271,7 +271,7 @@ subprojects {
       property "project.reporting.outputEncoding", "UTF-8"
       property "sonar.projectKey", "cloudbreak"
       property "sonar.projectName", "cloudbreak"
-      property "sonar.exclusions", "web/**,auth/**"
+      property "sonar.exclusions", "**/web/**,**/auth/**"
     }
   }
 }
