@@ -261,14 +261,6 @@ subprojects {
     mavenLocal()
   }
 
-  subprojects {
-    sonarRunner {
-      sonarProperties {
-        property "sonar.sourceEncoding", "UTF-8"
-      }
-    }
-  }
-
   sonarRunner {
     sonarProperties {
       property "sonar.host.url", "$config.sonar_host_url"
@@ -279,6 +271,7 @@ subprojects {
       property "project.reporting.outputEncoding", "UTF-8"
       property "sonar.projectKey", "cloudbreak"
       property "sonar.projectName", "cloudbreak"
+      property "sonar.exclusions", "web/**,auth/**"
     }
   }
 }
