@@ -11,3 +11,5 @@ buildscript {
 }
 
 apply plugin: 'com.moowork.node'
+sonarRunner.skipProject = true
+
