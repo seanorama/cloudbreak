@@ -11,7 +11,6 @@ buildscript {
 }
 
 apply plugin: 'jacoco'
-apply plugin: 'sonar-runner'
 apply plugin: 'license-report'
 apply plugin: 'spring-boot'
 
@@ -87,19 +86,6 @@ dependencies {
     testCompile group: 'com.jayway.restassured',   name: 'rest-assured',                   version: '2.3.4'
     testCompile group: 'com.jayway.restassured',   name: 'json-path',                      version: '2.3.4'
 
-}
-
-sonarRunner {
-  sonarProperties {
-    property "sonar.host.url", "$config.sonar_host_url"
-    property "sonar.jdbc.url", "$config.sonar_jdbc_url"
-    property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
-    property "sonar.jdbc.username", "$System.env.SONAR_USERNAME"
-    property "sonar.jdbc.password", "$System.env.SONAR_PASSWORD"
-    property "project.reporting.outputEncoding", "UTF-8"
-    property "sonar.projectKey", "cloudbreak"
-    property "sonar.projectName", "cloudbreak"
-  }
 }
 
 jacoco {

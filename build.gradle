@@ -190,6 +190,7 @@ ext.config = new ConfigSlurper(env).parse(file("$rootDir/gradle/config/buildConf
 allprojects {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
+
   group = 'com.sequenceiq'
   configurations {
     testRuntime {
@@ -203,6 +204,8 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'checkstyle'
+  apply plugin: 'sonar-runner'
+
 
   sourceCompatibility = 1.7
   targetCompatibility = 1.7
@@ -256,5 +259,27 @@ subprojects {
     maven { url "http://repo.spring.io/milestone" }
     maven { url "https://repo.spring.io/snapshot" }
     mavenLocal()
+  }
+
+  subprojects {
+    sonarRunner {
+      sonarProperties {
+        property "sonar.sourceEncoding", "UTF-8"
+      }
+    }
+  }
+
+
+  sonarRunner {
+    sonarProperties {
+      property "sonar.host.url", "$config.sonar_host_url"
+      property "sonar.jdbc.url", "$config.sonar_jdbc_url"
+      property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+      property "sonar.jdbc.username", "$System.env.SONAR_USERNAME"
+      property "sonar.jdbc.password", "$System.env.SONAR_PASSWORD"
+      property "project.reporting.outputEncoding", "UTF-8"
+      property "sonar.projectKey", "cloudbreak"
+      property "sonar.projectName", "cloudbreak"
+    }
   }
 }
