@@ -11,12 +11,15 @@ import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
 import com.sequenceiq.cloudbreak.cloud.aws.view.AwsCredentialView;
 import com.sequenceiq.cloudbreak.cloud.context.AuthenticatedContext;
 import com.sequenceiq.cloudbreak.cloud.context.CloudContext;
@@ -58,6 +61,17 @@ public class AwsClient {
                 : new AmazonEC2Client(createAwsCredentials(awsCredential));
         client.setRegion(RegionUtils.getRegion(regionName));
         return client;
+    }
+
+    public AmazonIdentityManagement createAmazonIdentityManagement(AwsCredentialView awsCredential) {
+        AmazonIdentityManagement iam = isRoleAssumeRequired(awsCredential)
+                ? new AmazonIdentityManagementClient(credentialClient.retrieveCachedSessionCredentials(awsCredential))
+                : new AmazonIdentityManagementClient(createAwsCredentials(awsCredential));
+        return iam;
+    }
+
+    public AWSCredentials getAwsCredentials(AwsCredentialView awsCredential) {
+        return isRoleAssumeRequired(awsCredential) ? credentialClient.retrieveCachedSessionCredentials(awsCredential) : createAwsCredentials(awsCredential);
     }
 
     public AmazonCloudFormationClient createCloudFormationClient(AwsCredentialView awsCredential, String regionName) {
@@ -104,6 +118,10 @@ public class AwsClient {
                 }
             }
         }
+    }
+
+    public boolean roleBasedCredential(AwsCredentialView awsCredential) {
+        return isNoneEmpty(awsCredential.getRoleArn());
     }
 
     private boolean isRoleAssumeRequired(AwsCredentialView awsCredential) {

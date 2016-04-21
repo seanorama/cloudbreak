@@ -121,6 +121,47 @@
 
   "Resources" : {
 
+    <#if enableInstanceProfile>
+    "S3AccessRole" : {
+        "Type"  : "AWS::IAM::Role",
+        "Properties" : {
+            "AssumeRolePolicyDocument" : {
+                "Statement" : [ {
+                    "Effect" : "Allow",
+                    "Principal" : {
+                        "Service" : [ "ec2.amazonaws.com" ]
+                    },
+                    "Action" : [ "sts:AssumeRole" ]
+                } ]
+            },
+            "Path" : "/"
+        }
+    },
+
+    "S3RolePolicies" : {
+        "Type" : "AWS::IAM::Policy",
+        "Properties" : {
+            "PolicyName" : "s3access",
+            "PolicyDocument" : {
+                "Statement" : [ {
+                    "Effect" : "Allow",
+                    "Action" : "s3:*",
+                    "Resource" : "*"
+                }]
+            },
+            "Roles" : [ { "Ref" : "S3AccessRole" } ]
+        }
+    },
+
+    "S3InstanceProfile" : {
+        "Type" : "AWS::IAM::InstanceProfile",
+        "Properties" : {
+            "Path" : "/",
+            "Roles" : [ { "Ref" : "S3AccessRole" } ]
+        }
+    },
+    </#if>
+
     <#if !existingVPC>
     "VPC" : {
       "Type" : "AWS::EC2::VPC",
@@ -257,6 +298,9 @@
     "AmbariNodeLaunchConfig${group.groupName?replace('_', '')}"  : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
       "Properties" : {
+        <#if enableInstanceProfile>
+        "IamInstanceProfile" : { "Ref": "S3InstanceProfile" },
+        </#if>
       	"BlockDeviceMappings" : [
       	  {
             "DeviceName" : { "Ref" : "RootDeviceName" },

@@ -55,6 +55,7 @@ public class CloudFormationTemplateBuilder {
         model.put("instanceGroups", awsGroupViews);
         model.put("existingVPC", existingVPC);
         model.put("existingIGW", existingIGW);
+        model.put("enableInstanceProfile", isEnableInstanceProfile(stack));
         model.put("existingSubnet", isNoneEmpty(existingSubnetCidr));
         model.put("securityRules", stack.getSecurity());
         model.put("cbSubnet", isBlank(existingSubnetCidr) ? stack.getNetwork().getSubnet().getCidr() : existingSubnetCidr);
@@ -82,6 +83,11 @@ public class CloudFormationTemplateBuilder {
     private boolean isDedicatedInstancesParamExistAndTrue(CloudStack stack) {
         return stack.getParameters().containsKey("dedicatedInstances")
                 && Boolean.valueOf(stack.getParameters().get("dedicatedInstances"));
+    }
+
+    private boolean isEnableInstanceProfile(CloudStack stack) {
+        return stack.getParameters().containsKey("enableInstanceProfile")
+                && Boolean.valueOf(stack.getParameters().get("enableInstanceProfile"));
     }
 
     @VisibleForTesting

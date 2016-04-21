@@ -317,8 +317,12 @@ angular.module('uluwatuControllers').controller('clusterController', ['$scope', 
                     return;
                 }
             }
+
             if ($rootScope.activeCredential && ($rootScope.activeCredential.cloudPlatform == 'AWS' || $rootScope.activeCredential.cloudPlatform == 'OPENSTACK')) {
                 delete $scope.cluster.fileSystem;
+            }
+            if ($rootScope.activeCredential && $rootScope.activeCredential.cloudPlatform !== 'AWS') {
+                delete $scope.cluster.enableInstanceProfile;
             }
             if (!$scope.isUndefined($scope.cluster.ambariStackDetails) && Object.keys($scope.cluster.ambariStackDetails).length !== 0) {
                 if ($scope.isUndefined($scope.cluster.ambariStackDetails.stack) ||

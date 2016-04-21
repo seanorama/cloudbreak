@@ -193,6 +193,8 @@ public class AwsPlatformParameters implements PlatformParameters {
     public List<StackParamValidation> additionalStackParameters() {
         List<StackParamValidation> additionalStackParameterValidations = Lists.newArrayList();
         additionalStackParameterValidations.add(new StackParamValidation("dedicatedInstances", false, Boolean.class, Optional.<String>absent()));
+        additionalStackParameterValidations.add(new StackParamValidation("instanceProfileRole", false, String.class, Optional.<String>absent()));
+        additionalStackParameterValidations.add(new StackParamValidation("enableInstanceProfile", false, Boolean.class, Optional.<String>absent()));
         return additionalStackParameterValidations;
     }
 

@@ -90,6 +90,7 @@ public class AwsResourceConnector implements ResourceConnector {
     private static final Logger LOGGER = LoggerFactory.getLogger(AwsResourceConnector.class);
     private static final String CLOUDBREAK_EBS_SNAPSHOT = "cloudbreak-ebs-snapshot";
     private static final int SNAPSHOT_VOLUME_SIZE = 10;
+    private static final List<String> CAPABILITY_IAM = Arrays.asList("CAPABILITY_IAM");
 
     private static final List<String> SUSPENDED_PROCESSES = Arrays.asList("Launch", "HealthCheck", "ReplaceUnhealthy", "AZRebalance", "AlarmNotification",
             "ScheduledActions", "AddToLoadBalancer", "RemoveFromLoadBalancerLowPriority");
@@ -136,6 +137,7 @@ public class AwsResourceConnector implements ResourceConnector {
                 .withStackName(cFStackName)
                 .withOnFailure(OnFailure.DO_NOTHING)
                 .withTemplateBody(cfTemplate)
+                .withCapabilities(CAPABILITY_IAM)
                 .withParameters(
                         getStackParameters(
                                 ac,

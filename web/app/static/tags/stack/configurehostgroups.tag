@@ -18,6 +18,12 @@
         <input type="checkbox" name="cluster_validateBlueprint" id="cluster_validateBlueprint" ng-model="cluster.validateBlueprint">
     </div>
 </div>
+<div class="form-group" ng-show="showAdvancedOptionForm && activeCredential.cloudPlatform == 'AWS'">
+    <label class="col-sm-3 control-label" for="cluster_instanceProfileEnabled">{{msg.cluster_form_instanceprofile_validate_label}}</label>
+    <div class="col-sm-8">
+        <input type="checkbox" name="cluster_instanceProfileEnabled" id="cluster_instanceProfileEnabled" ng-model="cluster.parameters.enableInstanceProfile">
+    </div>
+</div>
 <div class="form-group" ng-show="activeCredential">
     <label class="col-sm-3 control-label" for="hostgroupconfig">{{msg.cluster_form_hostgroup_label}}</label>
     <div class="col-sm-7 col-sm-offset-1">

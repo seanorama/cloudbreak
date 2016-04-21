@@ -1,5 +1,7 @@
 package com.sequenceiq.cloudbreak.cloud.aws;
 
+import java.net.URLDecoder;
+
 import javax.inject.Inject;
 
 import org.slf4j.Logger;
@@ -19,6 +21,19 @@ import com.amazonaws.services.ec2.model.InternetGateway;
 import com.amazonaws.services.ec2.model.InternetGatewayAttachment;
 import com.amazonaws.services.ec2.model.Subnet;
 import com.amazonaws.services.ec2.model.VpcAttributeName;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
+import com.amazonaws.services.identitymanagement.model.AttachedPolicy;
+import com.amazonaws.services.identitymanagement.model.GetPolicyRequest;
+import com.amazonaws.services.identitymanagement.model.GetPolicyResult;
+import com.amazonaws.services.identitymanagement.model.GetRolePolicyRequest;
+import com.amazonaws.services.identitymanagement.model.GetRolePolicyResult;
+import com.amazonaws.services.identitymanagement.model.GetRoleRequest;
+import com.amazonaws.services.identitymanagement.model.ListAttachedRolePoliciesRequest;
+import com.amazonaws.services.identitymanagement.model.ListAttachedRolePoliciesResult;
+import com.amazonaws.services.identitymanagement.model.ListRolePoliciesRequest;
+import com.amazonaws.services.identitymanagement.model.ListRolePoliciesResult;
+import com.amazonaws.util.json.JSONArray;
+import com.amazonaws.util.json.JSONObject;
 import com.sequenceiq.cloudbreak.cloud.Setup;
 import com.sequenceiq.cloudbreak.cloud.aws.view.AwsCredentialView;
 import com.sequenceiq.cloudbreak.cloud.aws.view.AwsNetworkView;
@@ -70,6 +85,10 @@ public class AwsSetup implements Setup {
                 }
             }
         }
+        AwsCredentialView awsCredentialView = new AwsCredentialView(ac.getCloudCredential());
+        if (isEnableInstanceProfile(stack) && awsClient.roleBasedCredential(awsCredentialView)) {
+            validateInstanceProfileCreation(awsCredentialView);
+        }
         if (awsNetworkView.isExistingVPC()) {
             try {
                 AmazonEC2Client amazonEC2Client = awsClient.createAccess(new AwsCredentialView(ac.getCloudCredential()),
@@ -85,6 +104,69 @@ public class AwsSetup implements Setup {
 
         }
         LOGGER.debug("setup has been executed");
+    }
+
+    private void validateInstanceProfileCreation(AwsCredentialView awsCredentialView) {
+        GetRoleRequest roleRequest = new GetRoleRequest();
+        String roleName = awsCredentialView.getRoleArn().split("/")[1];
+        roleRequest.withRoleName(roleName);
+        AmazonIdentityManagement client = awsClient.createAmazonIdentityManagement(awsCredentialView);
+        try {
+            ListRolePoliciesRequest listRolePoliciesRequest = new ListRolePoliciesRequest();
+            listRolePoliciesRequest.setRoleName(roleName);
+            ListRolePoliciesResult listRolePoliciesResult = client.listRolePolicies(listRolePoliciesRequest);
+            for (String s : listRolePoliciesResult.getPolicyNames()) {
+                GetRolePolicyRequest getRolePolicyRequest = new GetRolePolicyRequest();
+                getRolePolicyRequest.setRoleName(roleName);
+                getRolePolicyRequest.setPolicyName(s);
+                GetRolePolicyResult rolePolicy = client.getRolePolicy(getRolePolicyRequest);
+                String decode = URLDecoder.decode(rolePolicy.getPolicyDocument(), "UTF-8");
+                JSONObject object = new JSONObject(decode);
+                JSONArray statement = object.getJSONArray("Statement");
+                for(int i = 0; i < statement.length(); i++) {
+                    JSONArray action = statement.getJSONObject(i).getJSONArray("Action");
+                    for(int j = 0; j < action.length(); j++) {
+                        if (action.get(j).toString().replaceAll(" ","").equals("iam:*")) {
+                            return;
+                        }
+                    }
+                }
+            }
+            ListAttachedRolePoliciesRequest listAttachedRolePoliciesRequest = new ListAttachedRolePoliciesRequest();
+            listAttachedRolePoliciesRequest.setRoleName(roleName);
+            ListAttachedRolePoliciesResult listAttachedRolePoliciesResult = client.listAttachedRolePolicies(listAttachedRolePoliciesRequest);
+            for (AttachedPolicy attachedPolicy : listAttachedRolePoliciesResult.getAttachedPolicies()) {
+                GetPolicyRequest getRolePolicyRequest = new GetPolicyRequest();
+                getRolePolicyRequest.setPolicyArn(attachedPolicy.getPolicyArn());
+                GetPolicyResult policy = client.getPolicy(getRolePolicyRequest);
+                if (policy.getPolicy().getArn().contains("IAM")) {
+                    return;
+                }
+            }
+        } catch (AmazonServiceException ase) {
+            if (ase.getStatusCode() == 403) {
+                LOGGER.info("Could not get policies on the role because the arn role do not have enough permission.");
+                throw new CloudConnectorException(ase.getErrorMessage());
+            } else {
+                LOGGER.info(ase.getMessage());
+                throw new CloudConnectorException(ase.getErrorMessage());
+            }
+        }  catch (Exception e) {
+            LOGGER.info(e.getMessage());
+            throw new CloudConnectorException(e.getMessage());
+        }
+        LOGGER.info("Could not get policies on the role because the arn role do not have enough permission.");
+        throw new CloudConnectorException("Could not get policies on the role because the arn role do not have enough permission.");
+    }
+
+    private boolean isEnableInstanceProfile(CloudStack stack) {
+        return stack.getParameters().containsKey("enableInstanceProfile")
+                && Boolean.valueOf(stack.getParameters().get("enableInstanceProfile"));
+    }
+
+    private boolean isInstanceProfileRole(CloudStack stack) {
+        return stack.getParameters().containsKey("instanceProfileRole")
+                && Boolean.valueOf(stack.getParameters().get("instanceProfileRole"));
     }
 
     private void validateExistingVpc(AwsNetworkView awsNetworkView, AmazonEC2Client amazonEC2Client) {

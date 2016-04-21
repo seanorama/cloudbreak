@@ -3,11 +3,13 @@ package com.sequenceiq.cloudbreak.controller.validation.blueprint;
 import java.util.Map;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.api.client.util.Maps;
 import com.sequenceiq.cloudbreak.util.JsonUtil;
 
+@Component
 public class StackServiceComponentDescriptorMapFactory implements FactoryBean<StackServiceComponentDescriptors> {
     private String stackServiceComponentsJson;
     private Map<String, Integer> minCardinalityReps;
