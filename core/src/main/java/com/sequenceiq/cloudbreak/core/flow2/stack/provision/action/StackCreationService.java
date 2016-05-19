@@ -166,7 +166,7 @@ public class StackCreationService {
         flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_INFRASTRUCTURE_BOOTSTRAP, UPDATE_IN_PROGRESS.name());
     }
 
-    public void setupConsulMetadata(Stack stack) {
+    public void setupHostMetadata(Stack stack) {
         stackUpdater.updateStackStatus(stack.getId(), AVAILABLE);
         flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_INFRASTRUCTURE_METADATA_SETUP, UPDATE_IN_PROGRESS.name());
     }

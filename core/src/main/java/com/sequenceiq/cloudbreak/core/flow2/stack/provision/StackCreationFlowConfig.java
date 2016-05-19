@@ -4,8 +4,8 @@ import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreation
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.BOOTSTRAP_MACHINES_FINISHED_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.COLLECT_METADATA_FAILED_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.COLLECT_METADATA_FINISHED_EVENT;
-import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.CONSUL_METADATASETUP_FAILED_EVENT;
-import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.CONSUL_METADATASETUP_FINISHED_EVENT;
+import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.HOST_METADATASETUP_FAILED_EVENT;
+import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.HOST_METADATASETUP_FINISHED_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.IMAGE_COPY_CHECK_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.IMAGE_COPY_FAILED_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.IMAGE_COPY_FINISHED_EVENT;
@@ -24,7 +24,7 @@ import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreation
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationEvent.START_STACKANDCLUSTER_CREATION_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.BOOTSTRAP_MACHINES_STATE;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.COLLECTMETADATA_STATE;
-import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.CONSUL_METADATA_SETUP;
+import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.HOST_METADATA_SETUP;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.FINAL_STATE;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.IMAGESETUP_STATE;
 import static com.sequenceiq.cloudbreak.core.flow2.stack.provision.StackCreationState.IMAGE_CHECK_STATE;
@@ -57,8 +57,8 @@ public class StackCreationFlowConfig extends AbstractFlowConfiguration<StackCrea
             .from(PROVISIONING_FINISHED_STATE).to(COLLECTMETADATA_STATE).event(COLLECT_METADATA_FINISHED_EVENT).failureEvent(COLLECT_METADATA_FAILED_EVENT)
             .from(COLLECTMETADATA_STATE).to(TLS_SETUP_STATE).event(SSHFINGERPRINTS_EVENT).failureEvent(SSHFINGERPRINTS_FAILED_EVENT)
             .from(TLS_SETUP_STATE).to(BOOTSTRAP_MACHINES_STATE).event(BOOTSTRAP_MACHINES_FINISHED_EVENT).failureEvent(BOOTSTRAP_MACHINES_FAILED_EVENT)
-            .from(BOOTSTRAP_MACHINES_STATE).to(CONSUL_METADATA_SETUP).event(CONSUL_METADATASETUP_FINISHED_EVENT).failureEvent(CONSUL_METADATASETUP_FAILED_EVENT)
-            .from(CONSUL_METADATA_SETUP).to(FINAL_STATE).event(STACK_CREATION_FINISHED_EVENT).defaultFailureEvent()
+            .from(BOOTSTRAP_MACHINES_STATE).to(HOST_METADATA_SETUP).event(HOST_METADATASETUP_FINISHED_EVENT).failureEvent(HOST_METADATASETUP_FAILED_EVENT)
+            .from(HOST_METADATA_SETUP).to(FINAL_STATE).event(STACK_CREATION_FINISHED_EVENT).defaultFailureEvent()
             .build();
 
     private static final FlowEdgeConfig<StackCreationState, StackCreationEvent> EDGE_CONFIG =

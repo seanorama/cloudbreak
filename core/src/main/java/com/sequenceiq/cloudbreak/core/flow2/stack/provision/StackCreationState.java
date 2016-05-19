@@ -14,7 +14,7 @@ public enum StackCreationState implements FlowState<StackCreationState, StackCre
     COLLECTMETADATA_STATE,
     TLS_SETUP_STATE,
     BOOTSTRAP_MACHINES_STATE,
-    CONSUL_METADATA_SETUP,
+    HOST_METADATA_SETUP,
     FINAL_STATE;
 
     private Class<?> action;

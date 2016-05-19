@@ -42,8 +42,8 @@ import com.sequenceiq.cloudbreak.reactor.api.event.StackEvent;
 import com.sequenceiq.cloudbreak.reactor.api.event.StackFailureEvent;
 import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.BootstrapMachinesRequest;
 import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.BootstrapMachinesSuccess;
-import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.ConsulMetadataSetupRequest;
-import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.ConsulMetadataSetupSuccess;
+import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.HostMetadataSetupRequest;
+import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.HostMetadataSetupSuccess;
 import com.sequenceiq.cloudbreak.service.image.ImageService;
 import com.sequenceiq.cloudbreak.service.stack.event.ProvisionRequest;
 
@@ -178,17 +178,17 @@ public class StackCreationActions {
 
             @Override
             protected Selectable createRequest(StackContext context) {
-                return new ConsulMetadataSetupRequest(context.getStack().getId());
+                return new HostMetadataSetupRequest(context.getStack().getId());
             }
         };
     }
 
-    @Bean(name = "CONSUL_METADATA_SETUP")
-    public Action consulMetadataSetupAction() {
-        return new AbstractStackCreationAction<ConsulMetadataSetupSuccess>(ConsulMetadataSetupSuccess.class) {
+    @Bean(name = "HOST_METADATA_SETUP")
+    public Action hostMetadataSetupAction() {
+        return new AbstractStackCreationAction<HostMetadataSetupSuccess>(HostMetadataSetupSuccess.class) {
             @Override
-            protected void doExecute(StackContext context, ConsulMetadataSetupSuccess payload, Map<Object, Object> variables) throws Exception {
-                stackCreationService.setupConsulMetadata(context.getStack());
+            protected void doExecute(StackContext context, HostMetadataSetupSuccess payload, Map<Object, Object> variables) throws Exception {
+                stackCreationService.setupHostMetadata(context.getStack());
                 sendEvent(context);
             }
 
