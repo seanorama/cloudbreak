@@ -60,7 +60,11 @@ public abstract class AbstractMockIntegrationTest extends AbstractCloudbreakInte
     }
 
     public Verify verify(String path, String httpMethod) {
-        return new Verify(path, httpMethod, requestResponseMap);
+        return new Verify(path, httpMethod, requestResponseMap, false);
+    }
+
+    public Verify verifyRegexpPath(String regexpPath, String httpMethod) {
+        return new Verify(regexpPath, httpMethod, requestResponseMap, true);
     }
 
     protected String responseFromJsonFile(String path) {

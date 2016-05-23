@@ -36,8 +36,11 @@ public class SaltApiRunPostResponse extends ITResponse {
             ArrayList<Map<String, Object>> responseList = new ArrayList<>();
 
             Map<String, Object> hostMap = new HashMap<>();
-            for (int i = 1; i <= numberOfServers; i++) {
-                hostMap.put("host" + i, "192.168.1." + i);
+            for (int i = 0; i <= numberOfServers / 254; i++) {
+                int subAddress = Integer.min(254, numberOfServers - i * 254);
+                for (int j = 1; j <= subAddress; j++) {
+                    hostMap.put("host-" + i + "-" + j, "192.168." + i + "." + j);
+                }
             }
             responseList.add(hostMap);
 
@@ -47,10 +50,13 @@ public class SaltApiRunPostResponse extends ITResponse {
         if (request.body().contains("network.interface_ip")) {
             NetworkInterfaceResponse networkInterfaceResponse = new NetworkInterfaceResponse();
             List<Map<String, String>> result = new ArrayList<>();
-            for (int i = 1; i <= numberOfServers; i++) {
-                Map<String, String> networkHashMap = new HashMap<>();
-                networkHashMap.put("host" + i, "192.168.1." + i);
-                result.add(networkHashMap);
+            for (int i = 0; i <= numberOfServers / 254; i++) {
+                int subAddress = Integer.min(254, numberOfServers - i * 254);
+                for (int j = 1; j <= subAddress; j++) {
+                    Map<String, String> networkHashMap = new HashMap<>();
+                    networkHashMap.put("host-" + i + "-" + j, "192.168." + i + "." + j);
+                    result.add(networkHashMap);
+                }
             }
             networkInterfaceResponse.setResult(result);
             return getObjectMapper().writeValueAsString(networkInterfaceResponse);
@@ -60,8 +66,11 @@ public class SaltApiRunPostResponse extends ITResponse {
             ArrayList<Map<String, Object>> responseList = new ArrayList<>();
 
             Map<String, Object> hostMap = new HashMap<>();
-            for (int i = 1; i <= numberOfServers; i++) {
-                hostMap.put("host" + i, "192.168.1." + i);
+            for (int i = 0; i <= numberOfServers / 254; i++) {
+                int subAddress = Integer.min(254, numberOfServers - i * 254);
+                for (int j = 1; j <= subAddress; j++) {
+                    hostMap.put("host-" + i + "-" + j, "192.168." + i + "." + j);
+                }
             }
             responseList.add(hostMap);
 
@@ -69,30 +78,27 @@ public class SaltApiRunPostResponse extends ITResponse {
             return getObjectMapper().writeValueAsString(applyResponse);
         }
         if (request.body().contains("state.highstate")) {
-            return responseFromJsonFile("saltapi/highstateresponse.json");
+            return responseFromJsonFile("saltapi/high_state_response.json");
         }
         if (request.body().contains("jobs.active")) {
-            return responseFromJsonFile("saltapi/runningjobsresponse.json");
+            return responseFromJsonFile("saltapi/runningjobs_response.json");
         }
         if (request.body().contains("jobs.lookup_jid")) {
-            return responseFromJsonFile("saltapi/lookupjidresponse.json");
+            return responseFromJsonFile("saltapi/lookup_jid_response.json");
         }
         if (request.body().contains("state.apply")) {
-            return responseFromJsonFile("saltapi/stateapplyresponse.json");
-        }
-        if (request.body().contains("jobs.active")) {
-            return responseFromJsonFile("saltapi/runningjobsresponse.json");
-        }
-        if (request.body().contains("jobs.lookup_jid")) {
-            return responseFromJsonFile("saltapi/lookupjidresponse.json");
+            return responseFromJsonFile("saltapi/state_apply_response.json");
         }
         if (request.body().contains("network.interface_ip")) {
             NetworkInterfaceResponse networkInterfaceResponse = new NetworkInterfaceResponse();
             List<Map<String, String>> result = new ArrayList<>();
-            for (int i = 1; i <= numberOfServers + 1; i++) {
-                Map<String, String> networkHashMap = new HashMap<>();
-                networkHashMap.put("host" + i, "192.168.1." + i);
-                result.add(networkHashMap);
+            for (int i = 0; i <= numberOfServers / 254; i++) {
+                int subAddress = Integer.min(254, numberOfServers - i * 254);
+                for (int j = 1; j <= subAddress; j++) {
+                    Map<String, String> networkHashMap = new HashMap<>();
+                    networkHashMap.put("host-" + i + "-" + j, "192.168." + i + "." + j);
+                    result.add(networkHashMap);
+                }
             }
             networkInterfaceResponse.setResult(result);
             return objectMapper.writeValueAsString(networkInterfaceResponse);

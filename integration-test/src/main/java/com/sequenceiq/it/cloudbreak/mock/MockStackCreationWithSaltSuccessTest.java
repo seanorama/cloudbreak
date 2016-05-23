@@ -1,9 +1,9 @@
-package com.sequenceiq.it.cloudbreak;
+package com.sequenceiq.it.cloudbreak.mock;
 
 import static com.sequenceiq.it.spark.ITResponse.CONSUL_API_ROOT;
-import static com.sequenceiq.it.spark.ITResponse.DOCKER_API_ROOT;
 import static com.sequenceiq.it.spark.ITResponse.MOCK_ROOT;
-import static com.sequenceiq.it.spark.ITResponse.SWARM_API_ROOT;
+import static com.sequenceiq.it.spark.ITResponse.SALT_API_ROOT;
+import static com.sequenceiq.it.spark.ITResponse.SALT_BOOT_ROOT;
 import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.post;
@@ -15,8 +15,11 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpStatus;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
@@ -30,13 +33,21 @@ import com.sequenceiq.cloudbreak.api.model.InstanceGroupType;
 import com.sequenceiq.cloudbreak.api.model.OnFailureAction;
 import com.sequenceiq.cloudbreak.api.model.OrchestratorRequest;
 import com.sequenceiq.cloudbreak.api.model.StackRequest;
+import com.sequenceiq.cloudbreak.orchestrator.salt.domain.SaltBootResponse;
+import com.sequenceiq.cloudbreak.orchestrator.salt.domain.SaltBootResponses;
 import com.sequenceiq.it.IntegrationTestContext;
+import com.sequenceiq.it.cloudbreak.AbstractMockIntegrationTest;
+import com.sequenceiq.it.cloudbreak.CloudbreakITContextConstants;
+import com.sequenceiq.it.cloudbreak.CloudbreakUtil;
+import com.sequenceiq.it.cloudbreak.InstanceGroup;
 import com.sequenceiq.it.spark.consul.ConsulMemberResponse;
-import com.sequenceiq.it.spark.docker.model.Info;
-import com.sequenceiq.it.spark.docker.model.InspectContainerResponse;
+import com.sequenceiq.it.spark.salt.SaltApiRunPostResponse;
 import com.sequenceiq.it.spark.spi.CloudMetaDataStatuses;
+import com.sequenceiq.it.verification.Verify;
 
-public class MockStackCreationWithSwarmSuccessTest extends AbstractMockIntegrationTest {
+public class MockStackCreationWithSaltSuccessTest extends AbstractMockIntegrationTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockStackCreationWithSaltSuccessTest.class);
 
     @Value("${mock.server.address:localhost}")
     private String mockServerAddress;
@@ -100,7 +111,6 @@ public class MockStackCreationWithSwarmSuccessTest extends AbstractMockIntegrati
             map.put("persistentStorage", persistentStorage);
         }
         stackRequest.setParameters(map);
-
         int numberOfServers = getNumberOfServers(instanceGroups);
 
         port(mockPort);
@@ -116,7 +126,7 @@ public class MockStackCreationWithSwarmSuccessTest extends AbstractMockIntegrati
         CloudbreakUtil.waitAndCheckStackStatus(getCloudbreakClient(), stackId, "AVAILABLE");
         itContext.putContextParam(CloudbreakITContextConstants.STACK_ID, stackId);
 
-        verify(DOCKER_API_ROOT + "/info", "GET").atLeast(1).verify();
+        verifyCalls(numberOfServers);
     }
 
     private void addSPIEndpoints(int sshPort) {
@@ -124,13 +134,40 @@ public class MockStackCreationWithSwarmSuccessTest extends AbstractMockIntegrati
     }
 
     private void addMockEndpoints(int numberOfServers) {
-        get(DOCKER_API_ROOT + "/info", (req, res) -> "");
-        get(DOCKER_API_ROOT + "/containers/:container/json", "application/json", (req, res) -> new InspectContainerResponse("id"), gson()::toJson);
-        post(DOCKER_API_ROOT + "/containers/:container/start", "application/json", (req, res) -> "");
-        get(SWARM_API_ROOT + "/info", "application/json", (req, res) -> new Info(numberOfServers), gson()::toJson);
+        get(SALT_BOOT_ROOT + "/health", (request, response) -> {
+            SaltBootResponse saltBootResponse = new SaltBootResponse();
+            saltBootResponse.setStatusCode(HttpStatus.OK.value());
+            return saltBootResponse;
+        }, gson()::toJson);
+
+        post(SALT_BOOT_ROOT + "/salt/server/pillar", (request, response) -> {
+            SaltBootResponse saltBootResponse = new SaltBootResponse();
+            saltBootResponse.setStatusCode(HttpStatus.OK.value());
+            return saltBootResponse;
+        }, gson()::toJson);
+        post(SALT_BOOT_ROOT + "/salt/action/distribute", (request, response) -> {
+            SaltBootResponses saltBootResponses = new SaltBootResponses();
+            saltBootResponses.setResponses(new ArrayList<>());
+            return saltBootResponses;
+        }, gson()::toJson);
+        post(SALT_API_ROOT + "/run", new SaltApiRunPostResponse(numberOfServers));
+
         get(CONSUL_API_ROOT + "/agent/members", "application/json", new ConsulMemberResponse(numberOfServers), gson()::toJson);
     }
 
+    private void verifyCalls(int numberOfServers) {
+        verify(SALT_BOOT_ROOT + "/health", "GET").exactTimes(1).verify();
+//        verify(SALT_BOOT_ROOT + "/salt/server/pillar", "POST").exactTimes(1).bodyContains("192.168.0.1").bodyContains("\"bootstrap_expect\":3").verify();
+        Verify distributeVerify = verify(SALT_BOOT_ROOT + "/salt/action/distribute", "POST").exactTimes(1);
+        for (int i = 0; i <= numberOfServers / 254; i++) {
+            int subAddress = Integer.min(254, numberOfServers - i * 254);
+            for (int j = 1; j <= subAddress; j++) {
+                distributeVerify.bodyContains("address\":\"192.168." + i + "." + j);
+            }
+        }
+        distributeVerify.verify();
+        verify(CONSUL_API_ROOT + "/agent/members", "GET").exactTimes(1);
+    }
 
     private int getNumberOfServers(List<InstanceGroup> instanceGroups) {
         int numberOfServers = 0;

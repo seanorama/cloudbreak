@@ -28,13 +28,17 @@ public class CloudMetaDataStatuses extends ITResponse {
 
     private List<CloudVmMetaDataStatus> createCloudVmMetaDataStatuses(List<CloudInstance> cloudInstances) {
         List<CloudVmMetaDataStatus> cloudVmMetaDataStatuses = new ArrayList<>();
-        for (int i = 0; i < cloudInstances.size(); i++) {
-            CloudInstance cloudInstance = cloudInstances.get(i);
-            CloudInstance cloudInstanceWithId = new CloudInstance(Integer.toString(i), cloudInstance.getTemplate());
-            CloudVmInstanceStatus cloudVmInstanceStatus = new CloudVmInstanceStatus(cloudInstanceWithId, InstanceStatus.STARTED);
-            CloudInstanceMetaData cloudInstanceMetaData = new CloudInstanceMetaData("192.168.1." + (i + 1), mockServerAddress, sshPort, "MOCK");
-            CloudVmMetaDataStatus cloudVmMetaDataStatus = new CloudVmMetaDataStatus(cloudVmInstanceStatus, cloudInstanceMetaData);
-            cloudVmMetaDataStatuses.add(cloudVmMetaDataStatus);
+        int numberOfServers = cloudInstances.size();
+        for (int i = 0; i <= numberOfServers / 254; i++) {
+            int subAddress = Integer.min(254, numberOfServers - i * 254);
+            for (int j = 1; j <= subAddress; j++) {
+                CloudInstance cloudInstance = cloudInstances.get(i * 254 + j - 1);
+                CloudInstance cloudInstanceWithId = new CloudInstance("instance-" + i + "-" + j, cloudInstance.getTemplate());
+                CloudVmInstanceStatus cloudVmInstanceStatus = new CloudVmInstanceStatus(cloudInstanceWithId, InstanceStatus.STARTED);
+                CloudInstanceMetaData cloudInstanceMetaData = new CloudInstanceMetaData("192.168." + i + "." + j, mockServerAddress, sshPort, "MOCK");
+                CloudVmMetaDataStatus cloudVmMetaDataStatus = new CloudVmMetaDataStatus(cloudVmInstanceStatus, cloudInstanceMetaData);
+                cloudVmMetaDataStatuses.add(cloudVmMetaDataStatus);
+            }
         }
         return cloudVmMetaDataStatuses;
     }
